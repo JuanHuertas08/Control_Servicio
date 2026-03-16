@@ -1,0 +1,13 @@
+# Python
+venv/
+__pycache__/
+*.py[cod]
+db.sqlite3
+
+# Angular
+node_modules/
+dist/
+.angular/
+
+# Environment
+.env

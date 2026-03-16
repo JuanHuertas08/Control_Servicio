@@ -1,0 +1,86 @@
+CREATE TABLE BD_General (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Ano_Mes TEXT NOT NULL,
+    Centro_1 TEXT ,
+    Centro_2 TEXT ,
+    Centro_Beneficio TEXT ,
+    PSSR TEXT NOT NULL,
+    Motivo_Pedido TEXT ,
+    Pedido TEXT,
+    Marca TEXT ,
+    Cliente TEXT NOT NULL,
+    Factura TEXT NOT NULL,
+    PSSR2 TEXT ,
+    Fecha_documento date,
+    Fecha_facturacion date,
+    Piezas TEXT,
+    Venta_Neta INTEGER,
+	Gross_Margin INTEGER,
+	Repuestos INTEGER,
+	Margen INTEGER,
+    Margen_Porcentaje INTEGER,
+	Mano_Obra INTEGER,
+	Trabajos_Terceros INTEGER,
+    Insumos INTEGER,
+	Descuento INTEGER,
+    Descuento_Porcentaje INTEGER,
+	Ano INTEGER,
+    Mes TEXT,
+    Porcentaje_Repuestos INTEGER,
+    Porcentaje_Mano_Obra INTEGER,
+    Unidad TEXT,
+    Tipo_Documento TEXT,
+    Causal_NC TEXT,
+    Ano_Compra INTEGER,
+	Mes_Compra INTEGER,	
+	Fecha_Primera_Compra INTEGER,	
+	Primer_Mes_Compra INTEGER,
+	Esquema_Servicio TEXT, 
+	Tipo_Facturacion TEXT,	
+	Ultima_Facturacion DATE,	
+	Fecha_Seguimiento DATE, 
+	Estado INT
+);
+
+--INSERTAR REGISTROS 
+INSERT INTO BD_General (Ano_Mes,Centro_1,Centro_2,Centro_Beneficio ,PSSR,
+Motivo_Pedido,Pedido,Marca,Cliente,Factura,
+PSSR2,Fecha_documento,Fecha_facturacion,Piezas,Venta_Neta,
+Gross_Margin,Repuestos,Margen,Margen_Porcentaje,Mano_Obra,
+Trabajos_Terceros,Insumos,Descuento,Descuento_Porcentaje,Ano,
+Mes,Porcentaje_Repuestos,Porcentaje_Mano_Obra,Unidad,Tipo_Documento,
+Causal_NC,Ano_Compra,Mes_Compra,Fecha_Primera_Compra,Primer_Mes_Compra,
+Esquema_Servicio,Tipo_Facturacion,Ultima_Facturacion,Fecha_Seguimiento, Estado)
+
+SELECT field1,	field2,	field3,	field4,	field5,
+	field6,	field7,	field8,	field9,	field10,
+	field11, 	REPLACE(replace(field12,'/','-'),'.','-'),	REPLACE(replace(field13,'/','-'),'.','-'),	replace(field14,'*','Sin Información'),	REPLACE(replace(field15,'$',''),'.',''),
+	REPLACE(replace(field16,'$',''),'.',''),	REPLACE(replace(field17,'$',''),'.',''),	REPLACE(field18,'%',''),	REPLACE(field19,'%',''),	REPLACE(replace(field20,'$',''),'.',''),
+	REPLACE(replace(field21,'$',''),'.',''),	REPLACE(REPLACE(replace(field22,'$',''),'.',''),'COP',''),	REPLACE(REPLACE(replace(field23,'$',''),'.',''),'%',''),	REPLACE(REPLACE(REPLACE(replace(field24,'$',''),'.',''),'%',''),'COP',''),	field25,
+	field26,	replace(field27,'%',''),	replace(field28,'%',''),	field29,	field30,
+	field31,	field32,	field33,	field34,	field35,
+	field36,	field37,	field38,	field39,	1
+FROM BasedeDatosEXCEL WHERE FIELD1<>'Año/Mes natural';
+
+--CREAR TABLA DE SEGUIMIENTOS
+CREATE TABLE Seguimiento (
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    Cliente TEXT NOT NULL,
+	Factura TEXT NOT NULL,
+	Tipo_Facturacion TEXT NOT NULL,
+	PSSR TEXT NOT NULL,
+	Fecha_Facturacion DATE,
+	ESTADO TEXT NOT NULL,
+	Fecha_Seguimiento DATE,
+	Tipo_Contacto TEXT,
+	Observaciones TEXT)
+
+--INSERTAR SEGUIMIENTOS
+INSERT INTO Seguimiento (
+    Cliente ,	Factura ,Tipo_Facturacion,	PSSR,	
+	Fecha_Facturacion,	ESTADO)
+	
+SELECT cliente, factura, tipo_facturacion, PSSR2, 
+max(Fecha_Facturacion), estado  FROM BD_General
+WHERE estado=1
+GROUP BY cliente;
