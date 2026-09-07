@@ -1,0 +1,148 @@
+<section class="orden-form">
+  <h1>Nueva Orden de Servicio</h1>
+
+  <form [formGroup]="form" (ngSubmit)="guardarOrden()">
+    <fieldset class="bloque-cliente">
+      <legend>Cliente</legend>
+
+      <label class="campo">
+        <span>NIT</span>
+        <input type="text" formControlName="nit" placeholder="Ej: 900123456" autocomplete="off" />
+      </label>
+
+      @if (buscandoCliente()) {
+        <p class="hint">Buscando cliente...</p>
+      }
+
+      @if (cliente(); as c) {
+        <div class="cliente-info">
+          <p class="nombre">{{ c.razon_social }}</p>
+          <p>Tel: {{ c.telefono || '—' }} · Email: {{ c.email || '—' }}</p>
+          <p>{{ c.direccion || '—' }}, {{ c.ciudad || '—' }}</p>
+        </div>
+      }
+
+      @if (clienteNoEncontrado()) {
+        <div class="cliente-nuevo" [formGroup]="clienteForm">
+          <p class="hint">No existe un cliente con este NIT. Regístralo en el maestro:</p>
+          <div class="grid">
+            <label class="campo">
+              <span>Razón social</span>
+              <input type="text" formControlName="razon_social" />
+            </label>
+            <label class="campo">
+              <span>Teléfono</span>
+              <input type="text" formControlName="telefono" />
+            </label>
+            <label class="campo">
+              <span>Email</span>
+              <input type="email" formControlName="email" />
+            </label>
+            <label class="campo">
+              <span>Dirección</span>
+              <input type="text" formControlName="direccion" />
+            </label>
+            <label class="campo">
+              <span>Ciudad</span>
+              <input type="text" formControlName="ciudad" />
+            </label>
+            <label class="campo">
+              <span>Contacto</span>
+              <input type="text" formControlName="contacto" />
+            </label>
+          </div>
+          <button type="button" class="secundario" (click)="registrarCliente()">
+            Registrar cliente
+          </button>
+        </div>
+      }
+    </fieldset>
+
+    <fieldset>
+      <legend>Datos de la Orden</legend>
+      <div class="grid">
+        <label class="campo">
+          <span>Centro</span>
+          <input type="text" formControlName="centro" />
+        </label>
+        <label class="campo">
+          <span>Centro de Beneficio</span>
+          <input type="text" formControlName="centro_beneficio" />
+        </label>
+        <label class="campo">
+          <span>PSSR / Asesor</span>
+          <input type="text" formControlName="pssr" />
+        </label>
+        <label class="campo">
+          <span>Pedido</span>
+          <input type="number" formControlName="pedido" />
+        </label>
+        <label class="campo">
+          <span>Factura</span>
+          <input type="text" formControlName="factura" />
+        </label>
+        <label class="campo">
+          <span>Tipo Doc</span>
+          <input type="text" formControlName="tipo_doc" />
+        </label>
+        <label class="campo">
+          <span>Unidad / Placa</span>
+          <input type="text" formControlName="unidad" />
+        </label>
+        <label class="campo">
+          <span>Marca</span>
+          <input type="text" formControlName="marca" />
+        </label>
+        <label class="campo">
+          <span>Fecha Documento</span>
+          <input type="date" formControlName="fecha_documento" />
+        </label>
+        <label class="campo">
+          <span>Fecha Entrega</span>
+          <input type="date" formControlName="fecha_entrega" />
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Valores</legend>
+      <div class="grid">
+        <label class="campo">
+          <span>Venta Neta</span>
+          <input type="number" formControlName="venta_neta" />
+        </label>
+        <label class="campo">
+          <span>Gross Margin</span>
+          <input type="number" formControlName="gross_margin" />
+        </label>
+        <label class="campo">
+          <span>Margen %</span>
+          <input type="number" formControlName="margen_porcentaje" />
+        </label>
+        <label class="campo">
+          <span>Repuestos</span>
+          <input type="number" formControlName="repuestos" />
+        </label>
+        <label class="campo">
+          <span>Mano de Obra</span>
+          <input type="number" formControlName="mano_obra" />
+        </label>
+        <label class="campo">
+          <span>Terceros</span>
+          <input type="number" formControlName="terceros" />
+        </label>
+      </div>
+    </fieldset>
+
+    @if (error()) {
+      <p class="mensaje error">{{ error() }}</p>
+    }
+    @if (mensaje()) {
+      <p class="mensaje ok">{{ mensaje() }}</p>
+    }
+
+    <button type="submit" class="primario" [disabled]="guardando()">
+      {{ guardando() ? 'Guardando...' : 'Guardar Orden' }}
+    </button>
+  </form>
+</section>
