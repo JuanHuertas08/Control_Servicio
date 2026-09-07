@@ -87,24 +87,3 @@ class SeguimientosView(APIView):
             return Response({"error": "Registro no encontrado"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
-    # En api/views.py dentro de la clase SeguimientosView o en una función dedicada
-def post(self, request):
-    try:
-        id_registro = request.data.get('id')
-        # Buscamos el registro por su ID
-        seguimiento = Seguimiento.objects.get(Id=id_registro)
-        
-        # Actualizamos con la información enviada desde Angular
-        seguimiento.Tipo_Contacto = request.data.get('tipo_contacto')
-        seguimiento.Fecha_Seguimiento = request.data.get('fecha_seguimiento')
-        seguimiento.Observaciones = request.data.get('observaciones')
-        seguimiento.ESTADO = '0' 
-        
-        seguimiento.save()
-        return Response({"message": "Seguimiento guardado y estado actualizado a REALIZADO"}, status=status.HTTP_200_OK)
-    
-    except Seguimiento.DoesNotExist:
-        return Response({"error": "Registro no encontrado"}, status=status.HTTP_404_NOT_FOUND)
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
