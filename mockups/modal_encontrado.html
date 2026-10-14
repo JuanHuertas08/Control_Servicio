@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{min-height:470px;font-family:Segoe UI,Arial,sans-serif;background:#fff;margin:0;padding:16px;color:#1f2937}
+.card{border:1px solid #cfe5b5;border-radius:8px;overflow:hidden;width:900px}
+.hd{background:#1f8240;color:#fff;padding:12px 18px;font-weight:600;font-size:16px;border-bottom:4px solid #76b82a}
+.bd{padding:20px 18px}
+.note{font-size:12.5px;color:#4b5563;margin-bottom:16px}
+.row{display:flex;gap:16px;align-items:flex-end}
+.f{display:flex;flex-direction:column;gap:6px;flex:1}
+label{font-size:13px;font-weight:600;color:#1f5f2e}label b{color:#c0392b}
+select,input{box-sizing:border-box;height:38px;padding:0 10px;border:1px solid #b9d79a;border-radius:6px;font-size:13.5px;color:#6b7280;background:#fff}
+.btns{display:flex;gap:10px}
+.btn{height:38px;padding:0 22px;border-radius:6px;font-size:13.5px;font-weight:600;border:1px solid #1f8240}
+.p{background:#1f8240;color:#fff}.s{background:#fff;color:#1f8240}
+.req{font-size:11.5px;color:#6b7280;margin-top:12px}
+.ov{position:fixed;inset:0;background:rgba(17,24,39,.45);display:flex;align-items:center;justify-content:center}
+.md{background:#fff;width:420px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);text-align:center;padding:34px 28px 22px;background:linear-gradient(var(--c) 0 6px,#fff 6px)}
+.mi{width:54px;height:54px;border-radius:50%;background:var(--c);color:#fff;font-size:28px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.mt{font-size:18px;font-weight:700;color:var(--t);margin-bottom:8px}.mx{font-size:13.5px;color:#4b5563;line-height:1.45;margin-bottom:20px}
+.mb{height:38px;padding:0 30px;border-radius:6px;font-size:13.5px;font-weight:600;border:none;background:var(--c);color:#fff}</style></head><body><div class="card">
+<div class="hd">Consultar Responsable</div><div class="bd">
+<div class="note">Ingrese el número de documento del responsable que desea consultar. El tipo de documento es opcional.</div>
+<div class="row">
+<div class="f"><label>Tipo de documento</label><select><option>Cédula de ciudadanía</option></select></div>
+<div class="f"><label>Número de documento <b>*</b></label><input value="1012345678" style="color:#1f2937"></div>
+<div class="btns"><button class="btn p">Consultar</button></div>
+</div>
+<div class="req"><b style="color:#c0392b">*</b> Campo obligatorio</div>
+</div></div><div class="ov" style="--c:#1f8240;--t:#1f5f2e"><div class="md"><div class="mi">✓</div><div class="mt">Información encontrada</div><div class="mx">Se encontró información del responsable con número de documento <b>1012345678</b>.</div><button class="mb">Aceptar</button></div></div></body></html>
