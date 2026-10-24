@@ -12,6 +12,7 @@ Uso:
     python generar_evidencias.py "Listado.xlsx" --manual      # pausa para revisar / loguear a mano
     python generar_evidencias.py "Listado.xlsx" --cantidad 24 --hoja "Criticidad Windows"
     python generar_evidencias.py "Listado.xlsx" --desde 25   # de la app 25 en adelante
+    python generar_evidencias.py "Listado.xlsx" --solo 19,23,25   # solo esas apps
     python generar_evidencias.py "Listado.xlsx" --incluir-no-probar   # lista las "No probar" como No Aplica
 
 Por defecto prueba todas las apps de la hoja y omite las marcadas "No probar".
@@ -34,7 +35,7 @@ from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
 from playwright.sync_api import sync_playwright
 
-VERSION = "3 (2026-10-24)"
+VERSION = "4 (2026-10-24)"
 
 TIMEOUT_CARGA_MS = 45_000
 ESPERA_TRAS_LOGIN_MS = 6_000
@@ -417,6 +418,7 @@ def main():
     ap.add_argument("--hoja", default="Criticidad Windows")
     ap.add_argument("--cantidad", type=int, default=0, help="Número de links a probar (desde el primero); 0 = todos")
     ap.add_argument("--desde", type=int, default=1, help="Número de la app desde la que se empieza (ej. 25)")
+    ap.add_argument("--solo", default="", help="Números de las apps a probar, separados por coma (ej. 19,23,25)")
     ap.add_argument("--incluir-no-probar", action="store_true",
                     help="Incluye las apps marcadas 'No probar' en el informe como 'No Aplica'")
     ap.add_argument("--salida", default=None, help="Nombre del archivo Word de salida")
@@ -426,6 +428,9 @@ def main():
     args = ap.parse_args()
 
     apps = leer_aplicaciones(args.excel, args.hoja, args.cantidad, not args.incluir_no_probar, args.desde)
+    if args.solo:
+        numeros = {int(n) for n in re.findall(r"\d+", args.solo)}
+        apps = [a for a in apps if a["n"] in numeros]
     inicio = datetime.now()
     carpeta = Path(f"evidencias_{inicio:%Y%m%d_%H%M}")
     carpeta.mkdir(exist_ok=True)
