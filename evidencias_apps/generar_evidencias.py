@@ -11,6 +11,7 @@ Uso:
     python generar_evidencias.py "Listado_de_Aplicaciones.xlsx"
     python generar_evidencias.py "Listado.xlsx" --manual      # pausa para revisar / loguear a mano
     python generar_evidencias.py "Listado.xlsx" --cantidad 24 --hoja "Criticidad Windows"
+    python generar_evidencias.py "Listado.xlsx" --desde 25   # de la app 25 en adelante
     python generar_evidencias.py "Listado.xlsx" --incluir-no-probar   # lista las "No probar" como No Aplica
 
 Por defecto prueba todas las apps de la hoja y omite las marcadas "No probar".
@@ -32,6 +33,8 @@ from docx.shared import Cm, Pt, RGBColor
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
 from playwright.sync_api import sync_playwright
+
+VERSION = "3 (2026-10-24)"
 
 TIMEOUT_CARGA_MS = 45_000
 ESPERA_TRAS_LOGIN_MS = 6_000
@@ -68,7 +71,7 @@ def extraer_url(texto):
     return m.group(0) if m else ""
 
 
-def leer_aplicaciones(ruta_excel, hoja, cantidad, omitir_no_probar=False):
+def leer_aplicaciones(ruta_excel, hoja, cantidad, omitir_no_probar=False, desde=1):
     wb = openpyxl.load_workbook(ruta_excel, data_only=True)
     ws = wb[hoja]
 
@@ -111,8 +114,9 @@ def leer_aplicaciones(ruta_excel, hoja, cantidad, omitir_no_probar=False):
         if omitir_no_probar and es_no_probar(app):
             continue
         apps.append(app)
-        if cantidad and len(apps) >= cantidad:
-            break
+    apps = apps[max(desde, 1) - 1:]
+    if cantidad:
+        apps = apps[:cantidad]
     return apps
 
 
@@ -412,6 +416,7 @@ def main():
     ap.add_argument("excel", help="Ruta del Excel con el listado de aplicaciones")
     ap.add_argument("--hoja", default="Criticidad Windows")
     ap.add_argument("--cantidad", type=int, default=0, help="Número de links a probar (desde el primero); 0 = todos")
+    ap.add_argument("--desde", type=int, default=1, help="Número de la app desde la que se empieza (ej. 25)")
     ap.add_argument("--incluir-no-probar", action="store_true",
                     help="Incluye las apps marcadas 'No probar' en el informe como 'No Aplica'")
     ap.add_argument("--salida", default=None, help="Nombre del archivo Word de salida")
@@ -420,12 +425,14 @@ def main():
     ap.add_argument("--oculto", action="store_true", help="Ejecuta el navegador sin ventana")
     args = ap.parse_args()
 
-    apps = leer_aplicaciones(args.excel, args.hoja, args.cantidad, not args.incluir_no_probar)
+    apps = leer_aplicaciones(args.excel, args.hoja, args.cantidad, not args.incluir_no_probar, args.desde)
     inicio = datetime.now()
     carpeta = Path(f"evidencias_{inicio:%Y%m%d_%H%M}")
     carpeta.mkdir(exist_ok=True)
     salida = args.salida or str(carpeta / f"Evidencias_Aplicaciones_{inicio:%Y%m%d_%H%M}.docx")
 
+    print(f"generar_evidencias.py - versión {VERSION}")
+    print(f"Excel: {Path(args.excel).resolve()}")
     print(f"Probando {len(apps)} aplicaciones de la hoja '{args.hoja}'...\n")
     resultados = []
     with sync_playwright() as pw:
