@@ -11,7 +11,9 @@ Uso:
     python generar_evidencias.py "Listado_de_Aplicaciones.xlsx"
     python generar_evidencias.py "Listado.xlsx" --manual      # pausa para revisar / loguear a mano
     python generar_evidencias.py "Listado.xlsx" --cantidad 24 --hoja "Criticidad Windows"
-    python generar_evidencias.py "Listado.xlsx" --cantidad 0 --omitir-no-probar   # todas, sin las "No probar"
+    python generar_evidencias.py "Listado.xlsx" --incluir-no-probar   # lista las "No probar" como No Aplica
+
+Por defecto prueba todas las apps de la hoja y omite las marcadas "No probar".
 """
 
 import argparse
@@ -409,16 +411,16 @@ def main():
     ap = argparse.ArgumentParser(description="Genera evidencias de acceso a aplicaciones en Word.")
     ap.add_argument("excel", help="Ruta del Excel con el listado de aplicaciones")
     ap.add_argument("--hoja", default="Criticidad Windows")
-    ap.add_argument("--cantidad", type=int, default=24, help="Número de links a probar (desde el primero); 0 = todos")
-    ap.add_argument("--omitir-no-probar", action="store_true",
-                    help="Excluye del informe las apps marcadas 'No probar'")
+    ap.add_argument("--cantidad", type=int, default=0, help="Número de links a probar (desde el primero); 0 = todos")
+    ap.add_argument("--incluir-no-probar", action="store_true",
+                    help="Incluye las apps marcadas 'No probar' en el informe como 'No Aplica'")
     ap.add_argument("--salida", default=None, help="Nombre del archivo Word de salida")
     ap.add_argument("--manual", action="store_true",
                     help="Pausa en cada app para revisar / iniciar sesión manualmente")
     ap.add_argument("--oculto", action="store_true", help="Ejecuta el navegador sin ventana")
     args = ap.parse_args()
 
-    apps = leer_aplicaciones(args.excel, args.hoja, args.cantidad, args.omitir_no_probar)
+    apps = leer_aplicaciones(args.excel, args.hoja, args.cantidad, not args.incluir_no_probar)
     inicio = datetime.now()
     carpeta = Path(f"evidencias_{inicio:%Y%m%d_%H%M}")
     carpeta.mkdir(exist_ok=True)
