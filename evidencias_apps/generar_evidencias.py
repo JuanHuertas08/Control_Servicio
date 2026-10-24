@@ -35,7 +35,7 @@ from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
 from playwright.sync_api import sync_playwright
 
-VERSION = "4 (2026-10-24)"
+VERSION = "5 (2026-10-24)"
 
 TIMEOUT_CARGA_MS = 45_000
 ESPERA_TRAS_LOGIN_MS = 6_000
@@ -414,7 +414,8 @@ def generar_word(apps, resultados, salida, hoja, inicio, fin):
 # --------------------------------------------------------------------------- #
 def main():
     ap = argparse.ArgumentParser(description="Genera evidencias de acceso a aplicaciones en Word.")
-    ap.add_argument("excel", help="Ruta del Excel con el listado de aplicaciones")
+    ap.add_argument("excel", nargs="?", default="Listado_de_Aplicaciones_Para_Pruebas_de_Aplicaciones_2026.xlsx",
+                    help="Ruta del Excel con el listado de aplicaciones")
     ap.add_argument("--hoja", default="Criticidad Windows")
     ap.add_argument("--cantidad", type=int, default=0, help="Número de links a probar (desde el primero); 0 = todos")
     ap.add_argument("--desde", type=int, default=1, help="Número de la app desde la que se empieza (ej. 25)")
