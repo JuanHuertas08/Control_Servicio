@@ -11,6 +11,7 @@ Uso:
     python generar_evidencias.py "Listado_de_Aplicaciones.xlsx"
     python generar_evidencias.py "Listado.xlsx" --manual      # pausa para revisar / loguear a mano
     python generar_evidencias.py "Listado.xlsx" --cantidad 24 --hoja "Criticidad Windows"
+    python generar_evidencias.py "Listado.xlsx" --cantidad 0 --omitir-no-probar   # todas, sin las "No probar"
 """
 
 import argparse
@@ -55,7 +56,17 @@ def limpiar(valor):
     return str(valor).replace("\xa0", " ").strip()
 
 
-def leer_aplicaciones(ruta_excel, hoja, cantidad):
+def extraer_url(texto):
+    """Devuelve la URL de la celda. Si hay varias, prefiere la marcada como 'Actualizada'."""
+    texto = limpiar(texto)
+    m = re.search(r"actualizada\s*:?\s*(https?://\S+)", texto, re.IGNORECASE)
+    if m:
+        return m.group(1)
+    m = re.search(r"https?://\S+", texto)
+    return m.group(0) if m else ""
+
+
+def leer_aplicaciones(ruta_excel, hoja, cantidad, omitir_no_probar=False):
     wb = openpyxl.load_workbook(ruta_excel, data_only=True)
     ws = wb[hoja]
 
@@ -84,20 +95,21 @@ def leer_aplicaciones(ruta_excel, hoja, cantidad):
 
     apps = []
     for fila in ws.iter_rows(min_row=fila_encabezado + 1, values_only=True):
-        url = limpiar(fila[i_url]) if i_url is not None else ""
+        url = extraer_url(fila[i_url]) if i_url is not None else ""
         if not url:
             continue
-        apps.append(
-            {
-                "n": len(apps) + 1,
-                "aplicacion": limpiar(fila[i_app]) if i_app is not None else "",
-                "url": url,
-                "usuario": limpiar(fila[i_usr]) if i_usr is not None else "",
-                "password": limpiar(fila[i_pwd]) if i_pwd is not None else "",
-                "observaciones": limpiar(fila[i_obs]) if i_obs is not None else "",
-            }
-        )
-        if len(apps) >= cantidad:
+        app = {
+            "n": len(apps) + 1,
+            "aplicacion": limpiar(fila[i_app]) if i_app is not None else "",
+            "url": url,
+            "usuario": limpiar(fila[i_usr]) if i_usr is not None else "",
+            "password": limpiar(fila[i_pwd]) if i_pwd is not None else "",
+            "observaciones": limpiar(fila[i_obs]) if i_obs is not None else "",
+        }
+        if omitir_no_probar and es_no_probar(app):
+            continue
+        apps.append(app)
+        if cantidad and len(apps) >= cantidad:
             break
     return apps
 
@@ -397,14 +409,16 @@ def main():
     ap = argparse.ArgumentParser(description="Genera evidencias de acceso a aplicaciones en Word.")
     ap.add_argument("excel", help="Ruta del Excel con el listado de aplicaciones")
     ap.add_argument("--hoja", default="Criticidad Windows")
-    ap.add_argument("--cantidad", type=int, default=24, help="Número de links a probar (desde el primero)")
+    ap.add_argument("--cantidad", type=int, default=24, help="Número de links a probar (desde el primero); 0 = todos")
+    ap.add_argument("--omitir-no-probar", action="store_true",
+                    help="Excluye del informe las apps marcadas 'No probar'")
     ap.add_argument("--salida", default=None, help="Nombre del archivo Word de salida")
     ap.add_argument("--manual", action="store_true",
                     help="Pausa en cada app para revisar / iniciar sesión manualmente")
     ap.add_argument("--oculto", action="store_true", help="Ejecuta el navegador sin ventana")
     args = ap.parse_args()
 
-    apps = leer_aplicaciones(args.excel, args.hoja, args.cantidad)
+    apps = leer_aplicaciones(args.excel, args.hoja, args.cantidad, args.omitir_no_probar)
     inicio = datetime.now()
     carpeta = Path(f"evidencias_{inicio:%Y%m%d_%H%M}")
     carpeta.mkdir(exist_ok=True)

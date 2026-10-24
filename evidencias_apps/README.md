@@ -27,7 +27,8 @@ Las capturas y el Word quedan en la carpeta `evidencias_AAAAMMDD_HHMM/`.
 | Opción | Uso |
 |---|---|
 | `--manual` | Pausa en cada app para que inicies sesión o navegues a mano. Pulsa Enter para continuar. Úsalo si el login automático falla. |
-| `--cantidad 24` | Número de links a probar, contando desde el primero. |
+| `--cantidad 24` | Número de links a probar, contando desde el primero. `0` = todos. |
+| `--omitir-no-probar` | Excluye del informe las apps marcadas "No probar". |
 | `--hoja "Criticidad Windows"` | Hoja del Excel que se va a leer. |
 | `--oculto` | Ejecuta el navegador sin abrir ventana. |
 | `--salida archivo.docx` | Nombre del Word que se genera. |
