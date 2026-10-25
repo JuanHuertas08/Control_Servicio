@@ -13,12 +13,14 @@ Uso:
     python generar_evidencias.py "Listado.xlsx" --cantidad 24 --hoja "Criticidad Windows"
     python generar_evidencias.py "Listado.xlsx" --desde 25   # de la app 25 en adelante
     python generar_evidencias.py "Listado.xlsx" --solo 19,23,25   # solo esas apps
+    python generar_evidencias.py "Listado.xlsx" --detallado   # ficha completa por aplicación
     python generar_evidencias.py "Listado.xlsx" --incluir-no-probar   # lista las "No probar" como No Aplica
 
 Por defecto prueba todas las apps de la hoja y omite las marcadas "No probar".
 """
 
 import argparse
+import os
 import re
 import sys
 from datetime import datetime
@@ -35,7 +37,7 @@ from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
 from playwright.sync_api import sync_playwright
 
-VERSION = "5 (2026-10-24)"
+VERSION = "6 (2026-10-25)"
 
 TIMEOUT_CARGA_MS = 45_000
 ESPERA_TRAS_LOGIN_MS = 6_000
@@ -45,7 +47,12 @@ OK = "OK"
 FALLA = "Falla"
 PARCIAL = "Revisar"
 
+EXITOSO = "Exitoso"
+NO_EXITOSO = "No exitoso"
+
 COLOR_ESTADO = {
+    EXITOSO: "C6EFCE",
+    NO_EXITOSO: "FFC7CE",
     OK: "C6EFCE",
     FALLA: "FFC7CE",
     PARCIAL: "FFEB9C",
@@ -323,6 +330,100 @@ def fila_tabla(tabla, etiqueta, valor, color=None):
         celdas[1].paragraphs[0].runs[0].bold = True
 
 
+def resultado_simple(res):
+    return EXITOSO if res["estado"] == OK else NO_EXITOSO
+
+
+def limpiar_metadatos(doc):
+    """Quita las marcas que python-docx deja en el archivo y en las imágenes."""
+    cp = doc.core_properties
+    cp.author = os.environ.get("USERNAME") or os.environ.get("USER") or ""
+    cp.last_modified_by = cp.author
+    cp.comments = ""
+    for i, el in enumerate(doc.element.body.iter(qn("wp:docPr")), 1):
+        el.set("name", f"Evidencia {i}")
+    for i, el in enumerate(doc.element.body.iter(qn("pic:cNvPr")), 1):
+        el.set("name", f"Evidencia {i}")
+
+
+def generar_word_simple(apps, resultados, salida, hoja, inicio, fin):
+    """Informe resumido: por aplicación solo URL, fecha/hora, resultado y capturas."""
+    doc = Document()
+    for s in doc.sections:
+        s.left_margin = s.right_margin = Cm(2)
+        s.top_margin = s.bottom_margin = Cm(2)
+    doc.styles["Normal"].font.name = "Calibri"
+    doc.styles["Normal"].font.size = Pt(10)
+
+    titulo = doc.add_heading("Evidencias de Pruebas de Acceso a Aplicaciones", 0)
+    titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.add_run(f"Hoja: {hoja}  |  Aplicaciones: {len(apps)}\n").bold = True
+    p.add_run(f"Fecha de ejecución: {inicio:%Y-%m-%d %H:%M} a {fin:%H:%M}")
+    aviso = doc.add_paragraph()
+    aviso.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r = aviso.add_run("Prueba de solo navegación y consulta. No se guardó ningún registro.")
+    r.italic = True
+    r.font.color.rgb = RGBColor(0xC0, 0x00, 0x00)
+
+    simples = [resultado_simple(res) for res in resultados]
+    doc.add_heading("Resumen", level=1)
+    estados = [e for e in (EXITOSO, NO_EXITOSO) if e in simples]
+    t = doc.add_table(rows=1, cols=len(estados))
+    t.style = "Table Grid"
+    t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    for celda, estado in zip(t.rows[0].cells, estados):
+        celda.text = f"{estado}: {simples.count(estado)}"
+        celda.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        celda.paragraphs[0].runs[0].bold = True
+        sombrear(celda, COLOR_ESTADO[estado])
+
+    doc.add_paragraph()
+    t = doc.add_table(rows=1, cols=4)
+    t.style = "Table Grid"
+    for celda, txt in zip(t.rows[0].cells, ["#", "Aplicación", "URL", "Resultado"]):
+        celda.text = txt
+        celda.paragraphs[0].runs[0].bold = True
+        sombrear(celda, "1F4E79")
+        celda.paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+    for app, estado in zip(apps, simples):
+        c = t.add_row().cells
+        c[0].text = str(app["n"])
+        c[1].text = app["aplicacion"]
+        c[2].text = app["url"]
+        c[3].text = estado
+        sombrear(c[3], COLOR_ESTADO[estado])
+        for celda in c:
+            for par in celda.paragraphs:
+                for run in par.runs:
+                    run.font.size = Pt(8)
+    anchos = [Cm(0.8), Cm(6.5), Cm(7.2), Cm(2.5)]
+    for fila in t.rows:
+        for celda, ancho in zip(fila.cells, anchos):
+            celda.width = ancho
+
+    for app, res, estado in zip(apps, resultados, simples):
+        doc.add_page_break()
+        doc.add_heading(f"{app['n']}. {app['aplicacion']}", level=1)
+        for etiqueta, valor in (("URL probada", app["url"]), ("Fecha y hora de la prueba", res["fecha"])):
+            p = doc.add_paragraph()
+            p.add_run(f"{etiqueta}: ").bold = True
+            p.add_run(valor)
+        p = doc.add_paragraph()
+        p.add_run("Resultado: ").bold = True
+        r = p.add_run(estado)
+        r.bold = True
+        r.font.color.rgb = RGBColor(0x00, 0x80, 0x00) if estado == EXITOSO else RGBColor(0xC0, 0x00, 0x00)
+
+        for _, ruta in res["capturas"]:
+            doc.add_paragraph()
+            doc.add_picture(str(ruta), width=Cm(16.5))
+
+    limpiar_metadatos(doc)
+    doc.save(salida)
+
+
 def generar_word(apps, resultados, salida, hoja, inicio, fin):
     doc = Document()
     for s in doc.sections:
@@ -408,6 +509,7 @@ def generar_word(apps, resultados, salida, hoja, inicio, fin):
             doc.add_paragraph(leyenda).runs[0].bold = True
             doc.add_picture(str(ruta), width=Cm(16.5))
 
+    limpiar_metadatos(doc)
     doc.save(salida)
 
 
@@ -426,6 +528,8 @@ def main():
     ap.add_argument("--manual", action="store_true",
                     help="Pausa en cada app para revisar / iniciar sesión manualmente")
     ap.add_argument("--oculto", action="store_true", help="Ejecuta el navegador sin ventana")
+    ap.add_argument("--detallado", action="store_true",
+                    help="Informe con ficha completa por aplicación (por defecto: URL, fecha/hora y resultado)")
     args = ap.parse_args()
 
     apps = leer_aplicaciones(args.excel, args.hoja, args.cantidad, not args.incluir_no_probar, args.desde)
@@ -453,7 +557,8 @@ def main():
             context.clear_cookies()
         navegador.close()
 
-    generar_word(apps, resultados, salida, args.hoja, inicio, datetime.now())
+    generar = generar_word if args.detallado else generar_word_simple
+    generar(apps, resultados, salida, args.hoja, inicio, datetime.now())
     print(f"\nInforme generado: {salida}")
 
 

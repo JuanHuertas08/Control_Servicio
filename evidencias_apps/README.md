@@ -34,6 +34,7 @@ Las capturas y el Word quedan en la carpeta `evidencias_AAAAMMDD_HHMM/`.
 | `--hoja "Criticidad Windows"` | Hoja del Excel que se va a leer. |
 | `--oculto` | Ejecuta el navegador sin abrir ventana. |
 | `--salida archivo.docx` | Nombre del Word que se genera. |
+| `--detallado` | Ficha completa por aplicación. Por defecto el informe muestra solo URL probada, fecha y hora, y resultado (Exitoso / No exitoso). |
 
 ## Estados
 
